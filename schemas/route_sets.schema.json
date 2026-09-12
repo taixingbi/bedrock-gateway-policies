@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "route_sets.yaml",
+  "type": "object",
+  "required": ["route_sets"],
+  "additionalProperties": false,
+  "properties": {
+    "route_sets": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["primary", "fallbacks"],
+        "additionalProperties": false,
+        "properties": {
+          "primary": { "type": "string", "minLength": 1 },
+          "fallbacks": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

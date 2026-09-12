@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "tenants.yaml",
+  "type": "object",
+  "required": ["tenants"],
+  "additionalProperties": false,
+  "properties": {
+    "tenants": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["state", "models", "rpm_limit", "guardrail_policy", "policy_epoch"],
+        "additionalProperties": false,
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": ["ACTIVE", "THROTTLED", "READ_ONLY", "SUSPENDED", "EMERGENCY_BLOCK"]
+          },
+          "models": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "rpm_limit": { "type": "integer", "minimum": 1 },
+          "guardrail_policy": { "type": "string", "minLength": 1 },
+          "route_set": { "type": "string", "minLength": 1 },
+          "slo": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "p95_latency_ms": { "type": "number", "exclusiveMinimum": 0 }
+            }
+          },
+          "policy_epoch": { "type": "integer", "minimum": 1 },
+          "allow_guardrail_bypass_on_error": { "type": "boolean" },
+          "debug_capture_enabled": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}
