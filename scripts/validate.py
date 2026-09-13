@@ -18,6 +18,11 @@ Three layers, in order (each one assumes the previous layer passed):
      enforce_model_allowlist() in the gateway would reject that
      tenant's own assigned route on every call
    - every iam_principals entry's `tenant_id` exists in tenants.yaml
+   - every route set's `primary`/`fallbacks` models are all present in
+     certified_models.yaml -- otherwise CertifiedRouter would silently
+     drop that model from routing at runtime (routing/router.py), or
+     pipeline.enforce_model_certification would reject it outright if
+     it's a `primary`
 
 Exits non-zero (with every problem found, not just the first) if
 anything fails.
@@ -38,6 +43,7 @@ FILES = {
     "tenants.yaml": "tenants.schema.json",
     "route_sets.yaml": "route_sets.schema.json",
     "iam_tenants.yaml": "iam_tenants.schema.json",
+    "certified_models.yaml": "certified_models.schema.json",
 }
 
 
@@ -99,6 +105,7 @@ def main() -> int:
         tenants = docs["tenants.yaml"].get("tenants", {})
         route_sets = docs["route_sets.yaml"].get("route_sets", {})
         iam_principals = docs["iam_tenants.yaml"].get("iam_principals", {})
+        certified_models = docs["certified_models.yaml"].get("certified_models", {})
 
         for tenant_id, tenant in tenants.items():
             route_set_name = tenant.get("route_set")
@@ -131,6 +138,15 @@ def main() -> int:
                     f"{env}/iam_tenants.yaml: principal '{arn}' maps to tenant_id "
                     f"'{tenant_id}', not found in {env}/tenants.yaml"
                 )
+
+        for route_set_name, route_set in route_sets.items():
+            for model in [route_set["primary"], *route_set.get("fallbacks", [])]:
+                if model not in certified_models:
+                    errors.append(
+                        f"{env}/route_sets.yaml: route_set '{route_set_name}' references "
+                        f"model '{model}', not certified in {env}/certified_models.yaml -- "
+                        f"run evals/run_eval.py against it first"
+                    )
 
     if errors:
         print(f"{len(errors)} problem(s) found:\n", file=sys.stderr)
