@@ -34,6 +34,7 @@
           "policy_epoch": { "type": "integer", "minimum": 1 },
           "allow_guardrail_bypass_on_error": { "type": "boolean" },
           "debug_capture_enabled": { "type": "boolean" },
+          "debug_capture_retention_days": { "type": "integer", "minimum": 1 },
           "monthly_budget": { "type": "number", "exclusiveMinimum": 0 }
         }
       }
