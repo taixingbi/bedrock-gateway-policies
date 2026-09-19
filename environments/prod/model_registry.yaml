@@ -1,0 +1,15 @@
+# Model governance overlay (plan section 34.5) -- see
+# environments/dev/model_registry.yaml's header for the full design
+# note. Prod only has Nova Micro certified today (see
+# certified_models.yaml/route_sets.yaml's own notes on why), so this
+# mirrors that scope rather than the dev file's fuller example set.
+
+model_registry:
+  us.amazon.nova-micro-v1:0:
+    status: APPROVED
+    owner: platform-ml-team
+    risk_classification: LOW
+    approved_use_cases: [chat, summarization]
+    region: us-east-1
+    max_data_classification: CONFIDENTIAL
+    model_version: "1.0"

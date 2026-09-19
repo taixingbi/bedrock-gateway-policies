@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "model_registry.yaml",
+  "type": "object",
+  "required": ["model_registry"],
+  "additionalProperties": false,
+  "properties": {
+    "model_registry": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status", "owner", "risk_classification"],
+        "additionalProperties": false,
+        "properties": {
+          "status": { "type": "string", "enum": ["APPROVED", "CONDITIONAL", "DEPRECATED", "BLOCKED"] },
+          "owner": { "type": "string", "minLength": 1 },
+          "risk_classification": { "type": "string", "enum": ["LOW", "MODERATE", "HIGH"] },
+          "approved_use_cases": { "type": "array", "items": { "type": "string" } },
+          "region": { "type": "string" },
+          "max_data_classification": { "type": "string", "enum": ["PUBLIC", "INTERNAL", "CONFIDENTIAL", "PHI", "PII"] },
+          "model_version": { "type": "string" },
+          "retirement_date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+          "notes": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -23,6 +23,11 @@ Three layers, in order (each one assumes the previous layer passed):
      drop that model from routing at runtime (routing/router.py), or
      pipeline.enforce_model_certification would reject it outright if
      it's a `primary`
+   - no route set's `primary`/`fallbacks` model is BLOCKED or
+     DEPRECATED in model_registry.yaml (plan section 34.5) -- a model
+     governance retired should never still be wired into an active
+     route set; pipeline.enforce_model_certification enforces this at
+     runtime too, but catching it here is cheaper than a live 403
 
 Exits non-zero (with every problem found, not just the first) if
 anything fails.
@@ -44,6 +49,7 @@ FILES = {
     "route_sets.yaml": "route_sets.schema.json",
     "iam_tenants.yaml": "iam_tenants.schema.json",
     "certified_models.yaml": "certified_models.schema.json",
+    "model_registry.yaml": "model_registry.schema.json",
 }
 
 
@@ -106,6 +112,7 @@ def main() -> int:
         route_sets = docs["route_sets.yaml"].get("route_sets", {})
         iam_principals = docs["iam_tenants.yaml"].get("iam_principals", {})
         certified_models = docs["certified_models.yaml"].get("certified_models", {})
+        model_registry = docs["model_registry.yaml"].get("model_registry", {})
 
         for tenant_id, tenant in tenants.items():
             route_set_name = tenant.get("route_set")
@@ -146,6 +153,13 @@ def main() -> int:
                         f"{env}/route_sets.yaml: route_set '{route_set_name}' references "
                         f"model '{model}', not certified in {env}/certified_models.yaml -- "
                         f"run evals/run_eval.py against it first"
+                    )
+                registry_entry = model_registry.get(model)
+                if registry_entry and registry_entry["status"] in ("BLOCKED", "DEPRECATED"):
+                    errors.append(
+                        f"{env}/route_sets.yaml: route_set '{route_set_name}' references "
+                        f"model '{model}', which is {registry_entry['status']} in "
+                        f"{env}/model_registry.yaml"
                     )
 
     if errors:
