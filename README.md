@@ -48,24 +48,45 @@ assuming the previous one passed:
    route on every call); an `iam_tenants.yaml` entry's `tenant_id` must
    exist in `tenants.yaml`.
 
-## Delivery (current -- interim)
+## Delivery (current -- two paths, not yet unified)
 
-Until the gateway has a working S3/DynamoDB-backed `PolicyStore`,
-`bedrock-gateway-app` keeps its own **copy** of `environments/dev/*`
-baked into the Docker image at build time (see that repo's
-`policies/*.yaml` banner comments and `scripts/sync-policies.sh`).
-Merging here doesn't automatically reach the app repo yet — run that
-sync script by hand and open a PR there. This is intentionally manual
-for now; see bedrock-gateway-app's plan notes for why (it's not worth
-automating something meant to be replaced).
+`bedrock-gateway-app` has a real DynamoDB-backed `PolicyStore`
+(`DynamoDbPolicyStore`, layered with a file fallback) and it's live
+today -- but only for tenants provisioned through the portal's
+self-service onboarding/policy-change-request flow (M11, plan 33),
+which writes to DynamoDB directly and never touches this repo. For
+hand-managed tenants that live only in this repo's `environments/*`
+files, `bedrock-gateway-app` still keeps its own **copy** of
+`environments/dev/*` baked into the Docker image at build time (see
+that repo's `policies/*.yaml` banner comments and
+`scripts/sync-policies.sh`, a manual, human-run script -- merging here
+does not automatically reach the app repo). A dry-run-by-default
+backfill tool (`scripts/migrate_file_tenants_to_dynamodb.py` in
+bedrock-gateway-app) can move a hand-managed tenant into DynamoDB, but
+running it is also manual.
+
+Net effect: two independent ways to change a tenant's live policy
+exist today (this repo's Git-reviewed files, and the portal's direct-
+to-DynamoDB propose/approve flow) with no reconciliation between them
+-- a real, tracked gap, not a design that's considered finished. See
+`plan.md` section 35 in the platform root for the fuller writeup and
+the proposed direction (Git as the single source of truth: PR ->
+validate -> approve -> publish, with the portal generating a change
+request against Git rather than writing DynamoDB directly).
 
 ## Delivery (planned)
 
-A `gha-policy-publish` OIDC role (defined in bedrock-gateway-infra)
-will let this repo's CI publish `environments/<env>/*` directly to
-DynamoDB on merge, and the gateway's `PolicyStore`/`IamTenantResolver`
-will read from there instead of a file baked into the image — no app
-rebuild needed for a policy change. Not built yet.
+A `gha-policy-publish` OIDC role already exists (bedrock-gateway-infra,
+`environments/global/main.tf`), scoped to `dynamodb:PutItem/UpdateItem`
+-- but it targets a placeholder table name (`gateway-policies`) that
+doesn't match any real per-environment table
+(`gateway-{dev,prod}-provisioned-tenant-policies`), and no workflow in
+this repo assumes it yet. This repo's own `.github/workflows/ci.yml`
+is validation-only today (`scripts/validate.py`, no AWS credentials,
+no publish step). Closing this means: fixing the IAM role's table
+target, adding a real publish job here triggered on merge to `main`,
+and deciding how (or whether) that reconciles with the portal's
+existing direct-to-DynamoDB write path above -- not built yet.
 
 ## Releases
 
