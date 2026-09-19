@@ -40,6 +40,19 @@
           "data_classification": {
             "type": "string",
             "enum": ["public", "internal", "confidential", "phi", "pii"]
+          },
+          "daily_budget": { "type": "number", "exclusiveMinimum": 0 },
+          "application_budgets": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": { "type": "number", "exclusiveMinimum": 0 }
+          },
+          "monthly_budget_soft_threshold_pct": {
+            "type": "number", "exclusiveMinimum": 0, "maximum": 1
+          },
+          "priority_class": {
+            "type": "string",
+            "enum": ["critical", "standard", "best_effort"]
           }
         }
       }
