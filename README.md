@@ -1,7 +1,7 @@
-# bedrock-gateway-policies
+# platform-policy-definitions
 
 Canonical tenant/route/IAM-principal policy config for
-[bedrock-gateway-app](https://github.com/taixingbi/bedrock-gateway-app),
+[bedrock-runtime-gateway-app](https://github.com/taixingbi/bedrock-runtime-gateway-app),
 split out of the original combined repo so a policy change (a rate
 limit, a new tenant, a route set) doesn't require an app rebuild or
 Terraform apply.
@@ -22,7 +22,7 @@ scripts/validate.py       # schema + duplicate-key + cross-file consistency chec
 
 `dev`/`prod` are directories, not branches — no merge-forward step
 needed between them, and it keeps this repo's environment model
-consistent with how bedrock-gateway-app/bedrock-gateway-infra already
+consistent with how bedrock-runtime-gateway-app/bedrock-runtime-gateway-infra already
 key off environment name.
 
 ## Validating changes
@@ -50,19 +50,19 @@ assuming the previous one passed:
 
 ## Delivery (current -- two paths, not yet unified)
 
-`bedrock-gateway-app` has a real DynamoDB-backed `PolicyStore`
+`bedrock-runtime-gateway-app` has a real DynamoDB-backed `PolicyStore`
 (`DynamoDbPolicyStore`, layered with a file fallback) and it's live
 today -- but only for tenants provisioned through the portal's
 self-service onboarding/policy-change-request flow (M11, plan 33),
 which writes to DynamoDB directly and never touches this repo. For
 hand-managed tenants that live only in this repo's `environments/*`
-files, `bedrock-gateway-app` still keeps its own **copy** of
+files, `bedrock-runtime-gateway-app` still keeps its own **copy** of
 `environments/dev/*` baked into the Docker image at build time (see
 that repo's `policies/*.yaml` banner comments and
 `scripts/sync-policies.sh`, a manual, human-run script -- merging here
 does not automatically reach the app repo). A dry-run-by-default
 backfill tool (`scripts/migrate_file_tenants_to_dynamodb.py` in
-bedrock-gateway-app) can move a hand-managed tenant into DynamoDB, but
+bedrock-runtime-gateway-app) can move a hand-managed tenant into DynamoDB, but
 running it is also manual.
 
 Net effect: two independent ways to change a tenant's live policy
@@ -76,7 +76,7 @@ request against Git rather than writing DynamoDB directly).
 
 ## Delivery (planned)
 
-A `gha-policy-publish` OIDC role already exists (bedrock-gateway-infra,
+A `gha-policy-publish` OIDC role already exists (bedrock-runtime-gateway-infra,
 `environments/global/main.tf`), scoped to `dynamodb:PutItem/UpdateItem`
 -- but it targets a placeholder table name (`gateway-policies`) that
 doesn't match any real per-environment table
