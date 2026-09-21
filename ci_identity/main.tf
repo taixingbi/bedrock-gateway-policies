@@ -42,6 +42,52 @@ data "aws_iam_policy_document" "policy_publish" {
   }
 }
 
+# This repo's own Terraform plan/apply-dev roles for ci_identity itself
+# -- brand new, unlike every other migrated repo (this one never had
+# ANY Terraform plan/apply role before; "publish" is a pure deploy-
+# style role, no Terraform of its own to run). Same naming convention
+# as every sibling repo's own infra plan/apply-dev roles.
+data "aws_iam_policy_document" "policy_infra_plan" {
+  statement {
+    sid       = "IamReadOnly"
+    actions   = ["iam:Get*", "iam:List*"]
+    resources = ["*"]
+  }
+  statement {
+    sid       = "StsReadOnly"
+    actions   = ["sts:GetCallerIdentity"]
+    resources = ["*"]
+  }
+  statement {
+    sid       = "TerraformStateS3"
+    actions   = ["s3:GetObject", "s3:ListBucket"]
+    resources = ["arn:aws:s3:::*tfstate*", "arn:aws:s3:::*tfstate*/*"]
+  }
+}
+
+data "aws_iam_policy_document" "policy_infra_apply" {
+  statement {
+    sid = "ManagePolicyRoles"
+    actions = [
+      "iam:CreateRole", "iam:DeleteRole", "iam:GetRole", "iam:UpdateRole",
+      "iam:PutRolePolicy", "iam:DeleteRolePolicy", "iam:GetRolePolicy",
+      "iam:AttachRolePolicy", "iam:DetachRolePolicy", "iam:ListAttachedRolePolicies",
+      "iam:ListRolePolicies", "iam:TagRole", "iam:UntagRole", "iam:PassRole",
+    ]
+    resources = ["arn:aws:iam::${local.account_id}:role/gha-policy-*"]
+  }
+  statement {
+    sid       = "OidcProviderReadOnly"
+    actions   = ["iam:ListOpenIDConnectProviders", "iam:GetOpenIDConnectProvider"]
+    resources = ["*"]
+  }
+  statement {
+    sid       = "TerraformStateS3"
+    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
+    resources = ["arn:aws:s3:::*tfstate*", "arn:aws:s3:::*tfstate*/*"]
+  }
+}
+
 module "github_oidc" {
   source = "git::https://github.com/taixingbi/platform-foundation.git//modules/github_oidc?ref=main"
 
@@ -56,6 +102,14 @@ module "github_oidc" {
     publish = {
       role_name   = "gha-policy-publish"
       policy_json = data.aws_iam_policy_document.policy_publish.json
+    }
+    plan = {
+      role_name   = "gha-policy-infra-plan"
+      policy_json = data.aws_iam_policy_document.policy_infra_plan.json
+    }
+    apply-dev = {
+      role_name   = "gha-policy-infra-apply-dev"
+      policy_json = data.aws_iam_policy_document.policy_infra_apply.json
     }
   }
 }

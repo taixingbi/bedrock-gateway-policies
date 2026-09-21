@@ -1,0 +1,96 @@
+name: Terraform
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ci_identity/**"
+      - ".github/workflows/terraform.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "ci_identity/**"
+      - ".github/workflows/terraform.yml"
+
+jobs:
+  fmt-validate:
+    name: fmt + validate (ci_identity)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.1"
+
+      - name: terraform fmt -check
+        run: terraform fmt -check -recursive ci_identity
+
+      - name: terraform init (no backend, validate only)
+        working-directory: ci_identity
+        run: terraform init -backend=false -input=false
+
+      - name: terraform validate
+        working-directory: ci_identity
+        run: terraform validate
+
+  plan:
+    name: plan (ci_identity)
+    needs: fmt-validate
+    runs-on: ubuntu-latest
+    environment: plan
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      TF_VAR_github_org: taixingbi
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_POLICY_INFRA_PLAN_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.1"
+
+      - name: terraform init
+        working-directory: ci_identity
+        run: terraform init -input=false
+
+      - name: terraform plan
+        working-directory: ci_identity
+        run: terraform plan -input=false -lock=false
+
+  apply-dev:
+    name: apply (ci_identity)
+    needs: fmt-validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: apply-dev
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      TF_VAR_github_org: taixingbi
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_POLICY_INFRA_APPLY_DEV_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.1"
+
+      - name: terraform init
+        working-directory: ci_identity
+        run: terraform init -input=false
+
+      - name: terraform apply
+        working-directory: ci_identity
+        run: terraform apply -input=false -auto-approve
