@@ -19,13 +19,8 @@
 # execute-api:Invoke on the /iam/* route, see infra/README.md) before
 # a new caller can use this path.
 
-iam_principals:
-  "arn:aws:iam::646821141010:role/team-a-ai-client":
-    tenant_id: team-a
-    application_id: team-a-ai-client
-    roles: [developer]
-
-  "arn:aws:sts::646821141010:assumed-role/team-a-ai-client/*":
-    tenant_id: team-a
-    application_id: team-a-ai-client
-    roles: [developer]
+iam_principals: {}
+# team-a's mappings removed 2026-09-23 -- team-a no longer exists as a
+# tenant (see tenants.yaml). No AWS_IAM/SigV4 caller is configured for
+# any of the 3 remaining tenants (tenant0-sandbox/tenant1-finance/
+# tenant2-search) in prod yet -- add an entry here when one needs it.

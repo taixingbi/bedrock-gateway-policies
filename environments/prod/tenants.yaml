@@ -12,7 +12,10 @@
 # whereas a file edit only takes effect on the next process restart.
 
 tenants:
-  finance:
+  # Renamed 2026-09-23 from "finance" (settings unchanged) -- team-a
+  # removed entirely in the same change, see git log for the prior
+  # tenant list.
+  tenant1-finance:
     state: ACTIVE
     models:
       - us.amazon.nova-micro-v1:0
@@ -25,7 +28,8 @@ tenants:
       p95_latency_ms: 3000
     policy_epoch: 1
 
-  search:
+  # Renamed 2026-09-23 from "search" (settings unchanged).
+  tenant2-search:
     state: ACTIVE
     models:
       - us.amazon.nova-micro-v1:0
@@ -38,19 +42,10 @@ tenants:
       p95_latency_ms: 5000
     policy_epoch: 1
 
-  sandbox:
+  # Renamed 2026-09-23 from "sandbox" (settings unchanged).
+  tenant0-sandbox:
     state: ACTIVE
     models: []   # no restriction beyond the gateway default model
     rpm_limit: 30
-    guardrail_policy: standard-v1
-    policy_epoch: 1
-
-  # Callers authenticated via the AWS_IAM/SigV4 path (see
-  # policies/iam_tenants.yaml, which maps an IAM principal ARN to this
-  # tenant_id) rather than a JWT.
-  team-a:
-    state: ACTIVE
-    models: []   # no restriction beyond the gateway default model
-    rpm_limit: 60
     guardrail_policy: standard-v1
     policy_epoch: 1
