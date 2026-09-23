@@ -82,7 +82,7 @@ A `gha-policy-publish` OIDC role already exists (this repo's own
 `ci_identity/main.tf`, see "Infra & CI" below), scoped to
 `dynamodb:PutItem/UpdateItem` -- but it targets a placeholder table
 name (`gateway-policies`) that doesn't match any real per-environment
-table (`gateway-{dev,prod}-provisioned-tenant-policies`), and no
+table (`gateway-tenant-policies-{dev,prod}`), and no
 workflow in this repo assumes it yet. This repo's own
 `.github/workflows/ci.yml` is validation-only today
 (`scripts/validate.py`, no AWS credentials, no publish step). Closing
