@@ -7,7 +7,7 @@
   "properties": {
     "tenants": {
       "type": "object",
-      "minProperties": 1,
+      "description": "File-backed tenant policies; an empty map is valid when tenants are managed in DynamoDB.",
       "additionalProperties": {
         "type": "object",
         "required": ["state", "models", "rpm_limit", "guardrail_policy", "policy_epoch"],
@@ -53,9 +53,7 @@
           "priority_class": {
             "type": "string",
             "enum": ["critical", "standard", "best_effort"]
-          },
-          "queue_enabled": { "type": "boolean" },
-          "queue_max_wait_s": { "type": "number", "exclusiveMinimum": 0 }
+          }
         }
       }
     }
