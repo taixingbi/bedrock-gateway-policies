@@ -53,7 +53,8 @@
           "priority_class": {
             "type": "string",
             "enum": ["critical", "standard", "best_effort"]
-          }
+          },
+          "tpm_limit": { "type": "integer", "minimum": 1 }
         }
       }
     }
