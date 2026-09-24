@@ -138,13 +138,22 @@ def main() -> int:
                         f"not in tenant '{tenant_id}'s models allowlist {allowlist}"
                     )
 
-        for arn, entry in iam_principals.items():
-            tenant_id = entry.get("tenant_id")
-            if tenant_id not in tenants:
-                errors.append(
-                    f"{env}/iam_tenants.yaml: principal '{arn}' maps to tenant_id "
-                    f"'{tenant_id}', not found in {env}/tenants.yaml"
-                )
+        # Skipped when tenants.yaml is empty: an empty `tenants: {}` means
+        # this environment's tenant policies are DynamoDB-managed (see
+        # that file's own header comment), so the file can no longer
+        # describe which tenant_ids really exist -- checking an
+        # iam_principals entry against it would just be a false
+        # positive, not a real inconsistency. Only meaningful (and only
+        # skipped) when tenants.yaml is entirely empty; a non-empty file
+        # still gets the real check below.
+        if tenants:
+            for arn, entry in iam_principals.items():
+                tenant_id = entry.get("tenant_id")
+                if tenant_id not in tenants:
+                    errors.append(
+                        f"{env}/iam_tenants.yaml: principal '{arn}' maps to tenant_id "
+                        f"'{tenant_id}', not found in {env}/tenants.yaml"
+                    )
 
         for route_set_name, route_set in route_sets.items():
             for model in [route_set["primary"], *route_set.get("fallbacks", [])]:
